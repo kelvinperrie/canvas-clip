@@ -1,14 +1,71 @@
+function randomIntFromInterval(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
 $(document).ready(function () {
 
 
     var Clippy = function () {
         var self = this;
-        
+
+        self.startPosX = 200;
+        self.startPosY = 150;
+
+        self.eyeLeftHeight = 15;
+        self.eyeRightHeight = 15;
+        self.eyeBallLeftHeight = 5;
+        self.eyeBallRightHeight = 5;
+        self.rightBrowVerticalOffset = 0;
+        self.leftBrowVerticalOffset = 0;
+
+        self.delayBetweenAnimations = 5000;
+        self.delayBeforeFirstAnimation = 2000;
+
+        self.Animations = [  ];
+
+        self.DoAnimation = function () {
+            var index = randomIntFromInterval(0, self.Animations.length);
+            //self.Animations[index]();
+            self.AnimateWink();
+            setTimeout(function () { self.DoAnimation(); }, self.delayBetweenAnimations);
+        };
+        setTimeout(function () { self.DoAnimation(); }, self.delayBeforeFirstAnimation);
+
+        self.AnimateWink = function (options) {
+            var shrinkTo = 0;
+
+            if (!options) {
+                options = {
+                    iterations : 0,
+                    returnToSize : self.eyeRightHeight,
+                    stepAmount: -1,
+                    eyeBallRatio: self.eyeBallRightHeight / self.eyeRightHeight,
+                    originalBrowOffset : self.rightBrowVerticalOffset
+                };
+            } else {
+                options.iterations = options.iterations + 1;
+            }
+            
+            self.eyeRightHeight = self.eyeRightHeight + options.stepAmount;
+            self.eyeBallRightHeight = self.eyeRightHeight * options.eyeBallRatio;
+            self.rightBrowVerticalOffset = options.originalBrowOffset + (options.returnToSize - self.eyeRightHeight);
+
+            if (self.eyeRightHeight === shrinkTo) {
+                options.stepAmount = 1;
+            }
+            if (self.eyeRightHeight === options.returnToSize) {
+                // we done? guess so
+                return;
+            }
+
+            setTimeout(function () { self.AnimateWink(options); }, 10);
+        };
+        self.Animations.push(self.AnimateWink);
+
         self.Draw = function (ctx) {
-
-
-            var x = 200;
-            var y = 150;
+            
+            var x = self.startPosX;
+            var y = self.startPosY;
 
             ctx.save();
 
@@ -35,7 +92,7 @@ $(document).ready(function () {
 
             // right side of the head
             var lengthOfHead = 120;
-            ctx.lineTo(x, y - lengthOfHead)
+            ctx.lineTo(x, y - lengthOfHead);
             y = y - lengthOfHead;
 
             // top of head
@@ -50,7 +107,7 @@ $(document).ready(function () {
             // left side of the head
             //var lengthOfHead = 100;
             var bufferOnRightOfHead = 30;
-            ctx.lineTo(x, y + lengthOfHead + bufferOnRightOfHead)
+            ctx.lineTo(x, y + lengthOfHead + bufferOnRightOfHead);
             y = y + lengthOfHead + bufferOnRightOfHead;
 
             // the ... chin?
@@ -64,9 +121,9 @@ $(document).ready(function () {
 
             // the tail thing
             var startTailLength = 40;
-            ctx.lineTo(x, y - startTailLength)
+            ctx.lineTo(x, y - startTailLength);
             y = y - startTailLength;
-            var flickRadius = 10
+            var flickRadius = 10;
             ctx.arcTo(x, y - flickRadius, x + flickRadius, y - flickRadius, flickRadius);
 
             ctx.stroke();
@@ -74,50 +131,52 @@ $(document).ready(function () {
 
             // the eyes
             ctx.save();
-            var leftX = 200;
-            var leftY = 130;
-            var rightX = 250;
-            var rightY = 130;
+            var eyeVerticalOffSet = -20;
+            var eyeGap = 50;
+            var eyeLeftX = self.startPosX;
+            var eyeLeftY = self.startPosY + eyeVerticalOffSet;
+            var eyeRightX = self.startPosX + eyeGap;
+            var eyeRightY = self.startPosY + eyeVerticalOffSet;
+
 
             ctx.beginPath();
-            ctx.ellipse(leftX, leftY, 20, 15, 0, 0, 2 * Math.PI);
+            ctx.ellipse(eyeLeftX, eyeLeftY, 20, self.eyeLeftHeight, 0, 0, 2 * Math.PI);
             ctx.fillStyle = '#fff';
             ctx.fill();
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.ellipse(rightX, rightY, 20, 15, 0, 0, 2 * Math.PI);
+            ctx.ellipse(eyeRightX, eyeRightY, 20, self.eyeRightHeight, 0, 0, 2 * Math.PI);
             ctx.fillStyle = '#fff';
             ctx.fill();
             ctx.stroke();
 
             // eye balls
             ctx.beginPath();
-            ctx.ellipse(leftX, leftY, 10, 5, 0, 0, 2 * Math.PI);
+            ctx.ellipse(eyeLeftX, eyeLeftY, 10, self.eyeBallLeftHeight, 0, 0, 2 * Math.PI);
             ctx.fillStyle = '#000';
             ctx.fill();
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.ellipse(rightX, rightY, 10, 5, 0, 0, 2 * Math.PI);
+            ctx.ellipse(eyeRightX, eyeRightY, 10, self.eyeBallRightHeight, 0, 0, 2 * Math.PI);
             ctx.fillStyle = '#000';
             ctx.fill();
             ctx.stroke();
 
             // furious brows
-
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.ellipse(leftX, leftY, 30, 25, 0, 250 * Math.PI / 180, 300 * Math.PI / 180);
+            ctx.ellipse(eyeLeftX, eyeLeftY + self.leftBrowVerticalOffset, 30, 25, 0, 250 * Math.PI / 180, 300 * Math.PI / 180);
             ctx.stroke();
             ctx.beginPath();
-            ctx.ellipse(rightX, rightY, 30, 25, 0, 240 * Math.PI / 180, 290 * Math.PI / 180);
+            ctx.ellipse(eyeRightX, eyeRightY + self.rightBrowVerticalOffset, 30, 25, 0, 240 * Math.PI / 180, 290 * Math.PI / 180);
             ctx.stroke();
 
             ctx.restore();
 
-        }
-    }
+        };
+    };
     
 
 
