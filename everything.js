@@ -18,15 +18,18 @@ $(document).ready(function () {
         self.rightBrowVerticalOffset = 0;
         self.leftBrowVerticalOffset = 0;
 
-        self.delayBetweenAnimations = 5000;
+        self.tailVerticalOffset = -10;
+        self.tailHorizontalOffset = 10;
+
+        self.delayBetweenAnimations = 2000;
         self.delayBeforeFirstAnimation = 2000;
 
         self.Animations = [  ];
 
         self.DoAnimation = function () {
-            var index = randomIntFromInterval(0, self.Animations.length);
+            var index = randomIntFromInterval(0, self.Animations.length-1);
             //self.Animations[index]();
-            self.AnimateSuggestiveBrows();
+            self.AnimateBlink();
             setTimeout(function () { self.DoAnimation(); }, self.delayBetweenAnimations);
         };
         setTimeout(function () { self.DoAnimation(); }, self.delayBeforeFirstAnimation);
@@ -139,6 +142,42 @@ $(document).ready(function () {
         };
         self.Animations.push(self.AnimateSuggestiveBrows);
 
+        self.AnimateTailWave = function (options) {
+            if (!options) {
+                options = {
+                    iterations: 0,
+                    alterTo: -20,
+                    stepAmount: -1,
+                    returnTo: self.tailVerticalOffset,
+                    loopsRequired: 2,
+                    loopsCounter: 1
+                };
+            } else {
+                options.iterations = options.iterations + 1; // what is this even for !
+            }
+
+            self.tailVerticalOffset = self.tailVerticalOffset + options.stepAmount;
+            // check to see if we're changing direction
+            if (self.tailVerticalOffset <= options.alterTo) {
+                options.stepAmount = options.stepAmount * -1;
+            }
+
+            // check to see if we're back at the start
+            if (self.tailVerticalOffset >= options.returnTo) {
+                self.tailVerticalOffset = options.returnTo;
+                if (options.loopsCounter < options.loopsRequired) {
+                    // switch directions again
+                    options.stepAmount = options.stepAmount * -1;
+                    options.loopsCounter = options.loopsCounter + 1;
+                } else {
+                    return;
+                }
+            }
+
+            setTimeout(function () { self.AnimateTailWave(options); }, 20);
+        };
+        self.Animations.push(self.AnimateTailWave);
+
         self.Draw = function (ctx) {
             
             var x = self.startPosX;
@@ -201,7 +240,8 @@ $(document).ready(function () {
             ctx.lineTo(x, y - startTailLength);
             y = y - startTailLength;
             var flickRadius = 10;
-            ctx.arcTo(x, y - flickRadius, x + flickRadius, y - flickRadius, flickRadius);
+            
+            ctx.arcTo(x, y + self.tailVerticalOffset, x + self.tailHorizontalOffset, y + self.tailVerticalOffset, flickRadius);
 
             ctx.stroke();
             ctx.restore();
