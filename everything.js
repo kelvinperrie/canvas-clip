@@ -26,7 +26,7 @@ $(document).ready(function () {
         self.DoAnimation = function () {
             var index = randomIntFromInterval(0, self.Animations.length);
             //self.Animations[index]();
-            self.AnimateWink();
+            self.AnimateSuggestiveBrows();
             setTimeout(function () { self.DoAnimation(); }, self.delayBetweenAnimations);
         };
         setTimeout(function () { self.DoAnimation(); }, self.delayBeforeFirstAnimation);
@@ -61,6 +61,83 @@ $(document).ready(function () {
             setTimeout(function () { self.AnimateWink(options); }, 10);
         };
         self.Animations.push(self.AnimateWink);
+
+        self.AnimateBlink = function (options) {
+            var shrinkTo = 0;
+
+            if (!options) {
+                options = {
+                    iterations: 0,
+                    returnToSize: self.eyeRightHeight,
+                    stepAmount: -1,
+                    eyeBallRatio: self.eyeBallRightHeight / self.eyeRightHeight,
+                    originalBrowOffset: self.rightBrowVerticalOffset
+                };
+            } else {
+                options.iterations = options.iterations + 1;
+            }
+
+            self.eyeRightHeight = self.eyeRightHeight + options.stepAmount;
+            self.eyeLeftHeight = self.eyeRightHeight;
+            self.eyeBallRightHeight = self.eyeRightHeight * options.eyeBallRatio;
+            self.eyeBallLeftHeight = self.eyeBallRightHeight;
+            self.rightBrowVerticalOffset = options.originalBrowOffset + (options.returnToSize - self.eyeRightHeight);
+            self.leftBrowVerticalOffset = self.rightBrowVerticalOffset;
+
+            if (self.eyeRightHeight === shrinkTo) {
+                options.stepAmount = 1;
+            }
+            if (self.eyeRightHeight === options.returnToSize) {
+                // we done? guess so
+                return;
+            }
+
+            setTimeout(function () { self.AnimateBlink(options); }, 10);
+        };
+        self.Animations.push(self.AnimateBlink);
+
+        self.AnimateSuggestiveBrows = function (options, type) {
+            if (!type) type = 'both';
+            if (!options) {
+                options = {
+                    iterations: 0,
+                    alterTo: self.rightBrowVerticalOffset - 14,
+                    stepAmount: -1,
+                    returnTo: self.rightBrowVerticalOffset,
+                    loopsRequired: 2,
+                    loopsCounter: 1
+                };
+            } else {
+                options.iterations = options.iterations + 1; // what is this even for !
+            }
+
+            if (type === 'both' || type === 'right') {
+                self.rightBrowVerticalOffset = self.rightBrowVerticalOffset + options.stepAmount;
+            }
+            if (type === 'both' || type === 'left') {
+                self.leftBrowVerticalOffset = self.leftBrowVerticalOffset + options.stepAmount;
+            }
+
+            // check to see if we're changing direction
+            if (self.rightBrowVerticalOffset <= options.alterTo) {
+                options.stepAmount = options.stepAmount * -1;
+            }
+
+            // check to see if we're back at the start
+            if (self.rightBrowVerticalOffset >= options.returnTo) {
+                self.rightBrowVerticalOffset = options.returnTo;
+                if (options.loopsCounter < options.loopsRequired) {
+                    // switch directions again
+                    options.stepAmount = options.stepAmount * -1;
+                    options.loopsCounter = options.loopsCounter + 1;
+                } else {
+                    return;
+                }
+            }
+
+            setTimeout(function () { self.AnimateSuggestiveBrows(options, type); }, 10);
+        };
+        self.Animations.push(self.AnimateSuggestiveBrows);
 
         self.Draw = function (ctx) {
             
